@@ -29,19 +29,18 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: "/icon-light-32x32.png",
+        url: "/logo-dragon-de-madera.svg",
+        type: "image/svg+xml",
+      },
+      {
+        url: "/logo-dragon-de-madera.svg",
         media: "(prefers-color-scheme: light)",
       },
       {
-        url: "/icon-dark-32x32.png",
+        url: "/logo-dragon-de-madera-blanco.svg",
         media: "(prefers-color-scheme: dark)",
       },
-      {
-        url: "/icon.svg",
-        type: "image/svg+xml",
-      },
     ],
-    apple: "/apple-icon.png",
   },
 }
 
