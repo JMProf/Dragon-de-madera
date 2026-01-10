@@ -1,18 +1,19 @@
-name: AI PR Reviewer (Critical & Auto-Reload)
+name: AI PR Reviewer (Full Auto)
 
 on:
   pull_request:
-    types: [opened, synchronize] # 'synchronize' se activa con cada nuevo push a la PR
+    types: [opened, synchronize]
   issue_comment:
     types: [created]
 
-# Esta es la clave: cancela ejecuciones previas del mismo PR si entra una nueva
+# Cancela ejecuciones previas si llega un nuevo push al mismo PR
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.event.issue.number }}
   cancel-in-progress: true
 
 jobs:
   review:
+    # Se ejecuta al abrir/actualizar PR o al comentar @reviewai
     if: >
       github.event_name == 'pull_request' || 
       (contains(github.event.comment.body, '@reviewai') && github.event.issue.pull_request)
@@ -32,6 +33,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Identificar el número de PR según el evento
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             PR_NUMBER="${{ github.event.pull_request.number }}"
           else
@@ -40,51 +42,52 @@ jobs:
           
           echo "PR_NUM=$PR_NUMBER" >> $GITHUB_ENV
           
-          # Obtenemos el diff actual del PR
+          # Obtener los cambios del PR (máximo 300 líneas para no saturar tokens)
           gh pr diff "$PR_NUMBER" | head -n 300 > diff.txt
           
           if [ ! -s diff.txt ]; then echo "EMPTY_DIFF=true" >> $GITHUB_ENV; fi
 
       - name: AI Analysis
-        id: ai
         if: env.EMPTY_DIFF != 'true'
+        id: ai
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
+          # Modelo Gemini 3 Flash Preview (confirmado disponible en tu cuenta)
           MODEL_NAME="gemini-3-flash-preview"
           
-          # Prompt mejorado para detección de errores y mención
-          PROMPT="Actúa como un Senior QA. Analiza este diff de código.
-          - Si detectas un error CRÍTICO (bugs, fallos de seguridad graves), inicia tu respuesta con la palabra 'CRITICAL_ERROR'.
-          - Identifica el archivo y la línea.
-          - Menciona al autor @${{ github.event.pull_request.user.login || github.event.issue.user.login }} solicitando cambios.
-          - Si no hay errores críticos, da consejos de calidad de código en español.
+          # Instrucciones para la IA
+          PROMPT="Actúa como un Revisor de Código Senior. Analiza este diff:
+          - Si el error es CRÍTICO (bugs de lógica, seguridad, fallos graves), inicia tu respuesta con la frase 'CRITICAL_ERROR'.
+          - Menciona al autor @${{ github.event.pull_request.user.login || github.event.issue.user.login }} para que corrija.
+          - Indica el archivo y la línea aproximada del problema.
+          - Si no hay errores críticos, da consejos proactivos de calidad en español.
           
           DIFF:
           $(cat diff.txt)"
 
+          # Crear el payload JSON de forma segura con jq
           jq -n --arg msg "$PROMPT" '{contents: [{parts: [{text: $msg}]}]}' > payload.json
 
-          RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=$GEMINI_API_KEY" \
-            -H "Content-Type: application/json" -d @payload.json)
+          # Petición a la API de Gemini
+          curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=$GEMINI_API_KEY" \
+            -H "Content-Type: application/json" -d @payload.json > raw_response.json
 
-          REVIEW_TEXT=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text // "Error: No se pudo generar la revisión."')
+          # Guardar el texto de la revisión en un ARCHIVO (evita errores de ejecución en Bash)
+          jq -r '.candidates[0].content.parts[0].text // "Error: La IA no devolvió contenido válido."' raw_response.json > review_body.txt
           
-          echo "RESULT<<EOF" >> $GITHUB_ENV
-          echo "$REVIEW_TEXT" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-          
-          # Determinar si bloqueamos el PR o solo comentamos
-          if [[ "$REVIEW_TEXT" == *"CRITICAL_ERROR"* ]]; then
-            echo "STATUS=REQUEST_CHANGES" >> $GITHUB_ENV
+          # Determinar si pedimos cambios o solo comentamos (usando nombres de flags válidos para 'gh')
+          if grep -q "CRITICAL_ERROR" review_body.txt; then
+            echo "STATUS=request-changes" >> $GITHUB_ENV
           else
-            echo "STATUS=COMMENT" >> $GITHUB_ENV
+            echo "STATUS=comment" >> $GITHUB_ENV
           fi
 
-      - name: Post Review
+      - name: Submit Review
         if: env.EMPTY_DIFF != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Publica la revisión formal. Si es STATUS=REQUEST_CHANGES, bloqueará el PR.
-          gh pr review ${{ env.PR_NUM }} --${{ env.STATUS | lower }} --body "${{ env.RESULT }}"
+          # Usamos --body-file para cargar el texto de forma segura sin que Bash lo interprete
+          # El flag --status utiliza el valor guardado (comment o request-changes)
+          gh pr review ${{ env.PR_NUM }} --${{ env.STATUS }} --body-file review_body.txt
