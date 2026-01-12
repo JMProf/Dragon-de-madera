@@ -1,7 +1,9 @@
 name: AI PR Reviewer (Enterprise Edition)
 
 on:
-  pull_request_target: # Cambiado para tener permisos en Forks
+  # Usamos pull_request_target para que el token tenga permisos de escritura 
+  # incluso si la PR viene de un fork externo.
+  pull_request_target:
     types: [opened, synchronize]
   issue_comment:
     types: [created]
@@ -12,27 +14,28 @@ concurrency:
 
 jobs:
   review:
-    # Solo se ejecuta si es PR o si es un comentario con @reviewai en una PR
+    # Lógica para ejecutar en PRs o cuando se menciona al bot en comentarios
     if: >
       github.event_name == 'pull_request_target' || 
       (contains(github.event.comment.body, '@reviewai') && github.event.issue.pull_request)
     
     runs-on: ubuntu-latest
+    
+    # Permisos explícitos necesarios para interactuar con la PR
     permissions:
       contents: read
       pull-requests: write
-      issues: write # Aumentado por si necesitas responder en comentarios
+      issues: write
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          # Si usas pull_request_target, debes especificar el ref de la PR 
-          # para analizar el código entrante y no el de tu rama principal
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          # IMPORTANTE: Con pull_request_target, debemos traer el código de la rama de la PR
+          ref: ${{ github.event.pull_request.head.sha || github.event.comment.issue.pull_request.head.sha }}
 
-      - name: Get PR Diff
-        id: diff
+      - name: Get PR Details
+        id: pr_data
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -43,17 +46,63 @@ jobs:
           fi
           echo "PR_NUM=$PR_NUMBER" >> $GITHUB_ENV
           
-          # Obtenemos el diff
+          # Obtenemos el diff y limitamos a las primeras 500 líneas para no saturar el prompt
           gh pr diff "$PR_NUMBER" | head -n 500 > diff.txt
           
-          if [ ! -s diff.txt ]; then echo "EMPTY_DIFF=true" >> $GITHUB_ENV; fi
+          if [ ! -s diff.txt ]; then 
+            echo "EMPTY_DIFF=true" >> $GITHUB_ENV
+          fi
 
-      # ... (Pasos de AI Analysis iguales) ...
+      - name: AI Analysis
+        if: env.EMPTY_DIFF != 'true'
+        id: ai
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          MODEL_NAME="gemini-1.5-flash" # Sugerido usar una versión estable
+          
+          # Crear instrucciones para la IA
+          cat << 'EOF' > instrucciones.txt
+          Actúa como un Lead Developer y Arquitecto de Software. Analiza el siguiente DIFF y genera un reporte estructurado en español usando exactamente estas cabeceras en Markdown:
+
+          ### 📑 RESUMEN DE CAMBIOS
+          ### 🚨 ERRORES A CORREGIR (CRITICAL)
+          ### 🛠️ OBSERVACIONES TÉCNICAS
+          ### 💡 RECOMENDACIONES DE MEJORA
+
+          Instrucciones adicionales:
+          - Menciona al autor @${{ github.event.pull_request.user.login || github.event.issue.user.login }} al inicio.
+          - Si detectas vulnerabilidades o errores que rompan el código, incluye la palabra 'CRITICAL_ERROR' en la sección de errores.
+          - Si no hay errores críticos, escribe 'Ninguno detectado'.
+
+          DIFF A ANALIZAR:
+          EOF
+
+          # Generar payload JSON para la API
+          jq -n --rawfile inst instrucciones.txt --rawfile codigo diff.txt \
+            '{contents: [{parts: [{text: ($inst + "\n" + $codigo)}]}]}' > payload.json
+
+          # Llamada a la API de Gemini
+          curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=$GEMINI_API_KEY" \
+            -H "Content-Type: application/json" -d @payload.json > raw_response.json
+
+          # Extraer el texto de la respuesta
+          jq -r '.candidates[0].content.parts[0].text // "Error: Sin respuesta de la IA."' raw_response.json > review_body.txt
+          
+          # Determinar si pedimos cambios o solo comentamos
+          if grep -q "CRITICAL_ERROR" review_body.txt; then
+            echo "STATUS=request-changes" >> $GITHUB_ENV
+          else
+            echo "STATUS=comment" >> $GITHUB_ENV
+          fi
 
       - name: Submit Review
         if: env.EMPTY_DIFF != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Usamos "gh pr review" directamente
+          # Eliminar la palabra clave interna antes de publicar si no quieres que se vea
+          sed -i 's/CRITICAL_ERROR//g' review_body.txt
+          
+          # Publicar la revisión en la PR
           gh pr review ${{ env.PR_NUM }} --${{ env.STATUS }} --body-file review_body.txt
