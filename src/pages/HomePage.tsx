@@ -3,7 +3,7 @@ import { Header, Footer, PageHero, SectionHeading, WhatsAppButton, FaqButton } f
 import { FeatureItem } from '@/components/molecules'
 import { Button } from '@/components/ui/button'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
-import { SPACING } from '@/lib/constants'
+import { SOCIAL_URLS, SPACING } from '@/lib/constants'
 import texts from '@/data/texts.json'
 import images from '@/data/images.json'
 
@@ -115,7 +115,7 @@ export function HomePage() {
             <p className={`text-center text-base sm:text-lg md:text-xl tracking-wide ${SPACING.marginBottomMd}`}>
               {texts.home.instagram.followText}
               <a
-                href={texts.home.instagram.accountUrl}
+                href={SOCIAL_URLS.instagram}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary hover:underline font-semibold"
