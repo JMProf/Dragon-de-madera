@@ -103,7 +103,7 @@ export function HomePage() {
               {texts.home.calendar.note}
             </p>
             <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-left mt-2 tracking-wide">
-              Haz clic en una partida para ver más información
+              {texts.home.calendar.subnote}
             </p>
           </div>
         </section>
@@ -112,9 +112,20 @@ export function HomePage() {
         <section className={`${SPACING.section} bg-background text-card`}>
           <div className={SPACING.container}>
             <SectionHeading>{texts.home.instagram.title}</SectionHeading>
+            <p className={`text-center text-base sm:text-lg md:text-xl tracking-wide ${SPACING.marginBottomMd}`}>
+              {texts.home.instagram.followText}
+              <a
+                href={texts.home.instagram.accountUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline font-semibold"
+              >
+                {texts.home.instagram.accountHandle}
+              </a>
+            </p>
             <div className={`grid grid-cols-2 md:grid-cols-3 ${SPACING.gapSm}`}>
               {images.home.instagram.map((imgSrc, i) => (
-                <div key={i} className="aspect-square rounded-lg overflow-hidden bg-muted">
+                <div key={i} className="aspect-[3/4] rounded-lg overflow-hidden bg-muted">
                   <img
                     src={imgSrc}
                     alt={`${texts.home.instagram.imageAlt} ${i + 1}`}
