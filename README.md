@@ -411,7 +411,7 @@ Esta guía te permite actualizar las fotos de la web sin necesidad de conocimien
    | Foto a cambiar | Busca esta clave | Ejemplo |
    |----------------|------------------|---------|
    | Foto principal "Únete a nuestra comunidad" | `"community"` | `"community": "/club-community-people-playing.jpg"` |
-   | Fotos de Instagram | `"instagram"` | Array con 9 fotos |
+   | Fotos de Instagram | `"instagram"` | Array con 6 fotos |
    | Foto del local | `"local"` | `"local": "/club-local-empty.jpg"` |
 
 3. **Cambia el nombre del archivo:**
