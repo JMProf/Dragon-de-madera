@@ -17,7 +17,7 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b border-border bg-background">
       <div className={SPACING.container}>
         <div className="flex h-20 sm:h-24 md:h-28 items-center justify-between">
           <Link to="/" onClick={handleLogoClick} className={`flex items-center ${SPACING.gapSm}`}>
