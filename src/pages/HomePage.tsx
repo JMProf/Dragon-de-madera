@@ -101,6 +101,9 @@ export function HomePage() {
             <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-left mt-2 tracking-wide">
               {texts.home.calendar.note}
             </p>
+            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-left mt-2 tracking-wide">
+              Haz clic en una partida para ver más información
+            </p>
           </div>
         </section>
 
@@ -164,7 +167,7 @@ export function HomePage() {
               <Button
                 size="lg"
                 asChild
-                className={`text-lg sm:text-xl md:text-2xl rounded-full border-0 ${SPACING.padMd} font-display bg-background text-secondary font-bold w-full sm:w-auto`}
+                className={`text-lg sm:text-xl md:text-2xl rounded-full border-0 px-12 py-4 sm:px-20 sm:py-6 font-display bg-background text-secondary font-bold w-full sm:w-auto`}
               >
                 <Link to="/club">{texts.home.cta.button}</Link>
               </Button>

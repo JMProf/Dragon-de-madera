@@ -153,7 +153,7 @@ export function ClubPage() {
                 <Button
                   size="lg"
                   asChild
-                  className={`text-lg sm:text-xl md:text-2xl bg-background text-secondary rounded-full border-0 ${SPACING.padMd} font-display w-full sm:w-auto`}
+                  className={`text-lg sm:text-xl md:text-2xl bg-background text-secondary rounded-full border-0 px-12 py-4 sm:px-20 sm:py-6 font-display w-full sm:w-auto`}
                 >
                   <a
                     href="https://www.google.com/maps/search/?api=1&query=Pepita+Serrador+3,+Granada"
@@ -193,7 +193,7 @@ export function ClubPage() {
                 <Button
                   size="lg"
                   asChild
-                  className={`font-display bg-secondary text-white hover:bg-secondary/90 text-lg sm:text-xl md:text-2xl ${SPACING.padLg} rounded-full shadow-lg transition-transform hover:scale-105 w-full sm:w-auto`}
+                  className={`font-display bg-secondary text-white hover:bg-secondary/90 text-lg sm:text-xl md:text-2xl px-18 py-6 sm:px-24 sm:py-8 rounded-full shadow-lg transition-transform hover:scale-105 w-full sm:w-auto`}
                 >
                   <a href={SOCIAL_URLS.whatsapp} target="_blank" rel="noopener noreferrer">
                     {texts.common.whatsappGroup}
@@ -214,7 +214,7 @@ export function ClubPage() {
             <Button
               size="lg"
               asChild
-              className={`text-lg sm:text-xl md:text-2xl text-secondary rounded-full border-0 ${SPACING.padMd} font-display bg-background w-full sm:w-auto`}
+              className={`text-lg sm:text-xl md:text-2xl text-secondary rounded-full border-0 px-12 py-4 sm:px-20 sm:py-6 font-display bg-background w-full sm:w-auto`}
             >
               <Link to="/socio">{texts.club.cta.button}</Link>
             </Button>
