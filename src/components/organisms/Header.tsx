@@ -38,6 +38,9 @@ export function Header() {
 
             {user ? (
               <div className="flex items-center gap-4 ml-4">
+                <NavLink to="/area-socios" className="text-secondary hover:text-secondary/80">
+                  {texts.navigation.memberArea}
+                </NavLink>
                 <div className="flex items-center gap-2 text-sm font-medium">
                   <UserCircle className="h-5 w-5 text-primary" />
                   <span className="max-w-[150px] truncate">{user.email}</span>
@@ -79,6 +82,12 @@ export function Header() {
                 <div className="border-t border-border mt-4 pt-4">
                   {user ? (
                     <div className="flex flex-col gap-4">
+                      <NavLink
+                        to="/area-socios"
+                        className="text-xl font-medium text-secondary hover:text-secondary/80 transition-colors"
+                      >
+                        {texts.navigation.memberArea}
+                      </NavLink>
                       <div className="flex items-center gap-2 text-lg font-medium">
                         <UserCircle className="h-6 w-6 text-primary" />
                         <span className="truncate">{user.email}</span>
