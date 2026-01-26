@@ -17,7 +17,9 @@
     "club": "Nuestro Club",
     "member": "Ser Socio",
     "memberArea": "Area de Socios",
-    "contact": "Contacto"
+    "contact": "Contacto",
+    "login": "Acceder",
+    "logout": "Cerrar Sesión"
   },
   "home": {
     "hero": {

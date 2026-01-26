@@ -1,7 +1,5 @@
 import { Routes, Route } from 'react-router-dom'
-import { HomePage } from '@/pages/HomePage'
-import { ClubPage } from '@/pages/ClubPage'
-import { SocioPage } from '@/pages/SocioPage'
+import { HomePage, ClubPage, SocioPage, LoginPage } from '@/pages'
 
 export function AppRoutes() {
   return (
@@ -9,6 +7,7 @@ export function AppRoutes() {
       <Route path="/" element={<HomePage />} />
       <Route path="/club" element={<ClubPage />} />
       <Route path="/socio" element={<SocioPage />} />
+      <Route path="/login" element={<LoginPage />} />
     </Routes>
   )
 }

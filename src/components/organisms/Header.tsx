@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Menu } from 'lucide-react'
+import { Menu, UserCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { DragonIcon, DragonTextLogo } from '@/components/atoms/icons'
@@ -7,9 +7,12 @@ import { NavLink } from '@/components/molecules/NavLink'
 import { useScrollNavigation } from '@/hooks/useScrollNavigation'
 import { navigationItems } from '@/config/navigation'
 import { SPACING } from '@/lib/constants'
+import { useAuth } from '@/hooks/useAuth'
+import texts from '@/data/texts.json'
 
 export function Header() {
   const { handleNavigation } = useScrollNavigation()
+  const { user, signOut } = useAuth()
 
   const handleLogoClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault()
@@ -32,6 +35,24 @@ export function Header() {
                 {item.label}
               </NavLink>
             ))}
+
+            {user ? (
+              <div className="flex items-center gap-4 ml-4">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <UserCircle className="h-5 w-5 text-primary" />
+                  <span className="max-w-[150px] truncate">{user.email}</span>
+                </div>
+                <Button variant="outline" size="sm" onClick={() => signOut()}>
+                  {texts.navigation.logout}
+                </Button>
+              </div>
+            ) : (
+              <NavLink to="/login" className="ml-4">
+                <Button variant="default" size="sm">
+                  {texts.navigation.login}
+                </Button>
+              </NavLink>
+            )}
           </nav>
 
           {/* Mobile Navigation */}
@@ -54,6 +75,27 @@ export function Header() {
                     {item.label}
                   </NavLink>
                 ))}
+
+                <div className="border-t border-border mt-4 pt-4">
+                  {user ? (
+                    <div className="flex flex-col gap-4">
+                      <div className="flex items-center gap-2 text-lg font-medium">
+                        <UserCircle className="h-6 w-6 text-primary" />
+                        <span className="truncate">{user.email}</span>
+                      </div>
+                      <Button variant="outline" onClick={() => signOut()}>
+                        {texts.navigation.logout}
+                      </Button>
+                    </div>
+                  ) : (
+                    <NavLink
+                      to="/login"
+                      className="text-xl font-medium text-card hover:text-primary transition-colors"
+                    >
+                      {texts.navigation.login}
+                    </NavLink>
+                  )}
+                </div>
               </nav>
             </SheetContent>
           </Sheet>
